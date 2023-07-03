@@ -59,6 +59,7 @@ private:
     float appleSpeed = 200.0f;
     float appleScale = 0.1f;
     Clock clock;
+    bool isPaused = false; 
 };
 
 Game::Game()
@@ -194,11 +195,24 @@ void Game::processEvents()
             if (event.key.code == Keyboard::Escape) {
                 if (gameState == GameState::Description || gameState == GameState::SpriteSelection || gameState == GameState::GameOver || gameState == GameState::Gameplay) {
                     gameState = GameState::Menu;
+                    score = 0;
+                    lives = 3;
                 }
                 else if (gameState == GameState::Menu) {
                     window.close();
                 }
             }
+            if (event.key.code == Keyboard::Space) {
+                if (gameState == GameState::Gameplay) {
+                    if (isPaused) {
+                        isPaused = false;
+                    }
+                    else {
+                        isPaused = true;
+                    }
+                }
+            }
+
             break;
         case Event::MouseButtonPressed:
             if (event.mouseButton.button == Mouse::Left) {
