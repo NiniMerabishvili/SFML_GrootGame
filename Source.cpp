@@ -164,7 +164,7 @@ Game::Game()
     lives = 3;
     gameOver = false;
     gameState = GameState::Menu;
-    previousScore = score;
+    previousScore = 0;
 
     // Set up game over text
     gameOverText.setFont(font);
@@ -192,7 +192,7 @@ void Game::processEvents()
             break;
         case Event::KeyPressed:
             if (event.key.code == Keyboard::Escape) {
-                if (gameState == GameState::Description || gameState == GameState::SpriteSelection || gameState == GameState::GameOver) {
+                if (gameState == GameState::Description || gameState == GameState::SpriteSelection || gameState == GameState::GameOver || gameState == GameState::Gameplay) {
                     gameState = GameState::Menu;
                 }
                 else if (gameState == GameState::Menu) {
@@ -301,6 +301,11 @@ void Game::update(float deltaTime)
             gameOverText.setString("Game Over\nYour Score is: " + to_string(score)); // Update game over text with the final score
         }
         scoreText.setString("Score: " + to_string(score) + "  Lives: " + to_string(lives));
+
+        if (score > 0 && score % 15 == 0 && score != previousScore) {
+            lives++;
+            previousScore = score - (score % 15); // Update previousScore to the nearest multiple of 25
+        }
     }
 }
 
