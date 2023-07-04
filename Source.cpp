@@ -16,7 +16,7 @@ private:
     void update(float deltaTime);
     void render();
     void showDescription();
-    void showSpriteSelection();
+    void showSpriteSelection(); // New function
     void startGame();
 
     bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
@@ -29,6 +29,7 @@ private:
     Text descriptionButton;
     Text descriptionText;
     Text spriteSelectionText;
+    Text spriteSelectionText1;
     Texture spriteSelectionBackgroundTexture;
     Sprite spriteSelectionBackground;
     Texture sprite1Texture;
@@ -55,11 +56,11 @@ private:
     int previousScore;
     bool gameOver;
     GameState gameState;
-    const float movementSpeed = 200.0f;
-    float appleSpeed = 200.0f;
+    const float movementSpeed = 250.0f;
+    float appleSpeed = 300.0f;
     float appleScale = 0.1f;
     Clock clock;
-    bool isPaused = false; 
+    bool isPaused = false;
 };
 
 Game::Game()
@@ -97,8 +98,13 @@ Game::Game()
     // Set up sprite selection text
     spriteSelectionText.setFont(font);
     spriteSelectionText.setString("Choose a Sprite");
-    spriteSelectionText.setCharacterSize(40);
+    spriteSelectionText.setCharacterSize(48);
     spriteSelectionText.setPosition(window.getSize().x / 2 - 148, window.getSize().y / 2 + 30);
+
+    spriteSelectionText1.setFont(font);
+    spriteSelectionText1.setString("Choose a Sprite");
+    spriteSelectionText1.setCharacterSize(48);
+    spriteSelectionText1.setPosition(window.getSize().x / 2 - 130, 200);
 
     // Load sprite selection background
     if (!spriteSelectionBackgroundTexture.loadFromFile("bg.jpg")) {
@@ -107,20 +113,28 @@ Game::Game()
     spriteSelectionBackground.setTexture(spriteSelectionBackgroundTexture);
 
     // Load sprite textures
-    if (!sprite1Texture.loadFromFile("sprite1.png")) {
+    if (!sprite1Texture.loadFromFile("childgroot.png")) {
         cerr << "Failed to load sprite1 texture" << endl;
     }
     sprite1.setTexture(sprite1Texture);
+    sprite1.setPosition(window.getSize().x / 2 - 200, window.getSize().y / 2 + 100);
+    sprite1.setScale(0.4f, 0.4f);
 
-    if (!sprite2Texture.loadFromFile("sprite2.png")) {
+    if (!sprite2Texture.loadFromFile("teenagegroot.png")) {
         cerr << "Failed to load sprite2 texture" << endl;
     }
     sprite2.setTexture(sprite2Texture);
+    sprite2.setPosition(window.getSize().x / 2 - 50, window.getSize().y / 2 + 50);
+    sprite2.setScale(0.5f, 0.5f);
 
-    if (!sprite3Texture.loadFromFile("sprite3.png")) {
+    if (!sprite3Texture.loadFromFile("adultgroot.png")) {
         cerr << "Failed to load sprite3 texture" << endl;
     }
     sprite3.setTexture(sprite3Texture);
+    sprite3.setPosition(window.getSize().x / 2 + 100, window.getSize().y / 2);
+    sprite3.setScale(0.6f, 0.6f);
+
+    selectedSprite = 0; // Initialize selected sprite to default (sprite1)
 
     // Load game background
     if (!gameBackgroundTexture.loadFromFile("bg.jpg")) {
@@ -148,7 +162,7 @@ Game::Game()
     blackApple.setScale(appleScale, appleScale);
 
     // Load Groot texture
-    if (!grootTexture.loadFromFile("groot_handup.png")) {
+    if (!grootTexture.loadFromFile("childgroot.png")) {
         cerr << "Failed to load Groot texture" << endl;
     }
     grootSprite.setTexture(grootTexture);
@@ -174,6 +188,7 @@ Game::Game()
     gameOverText.setPosition(window.getSize().x / 2 - 130, window.getSize().y / 2 - 70);
 }
 
+
 void Game::run()
 {
     while (window.isOpen()) {
@@ -187,72 +202,51 @@ void Game::processEvents()
 {
     Event event;
     while (window.pollEvent(event)) {
-        switch (event.type) {
-        case Event::Closed:
+        if (event.type == Event::Closed) {
             window.close();
-            break;
-        case Event::KeyPressed:
+        }
+        else if (event.type == Event::KeyPressed) {
             if (event.key.code == Keyboard::Escape) {
-                if (gameState == GameState::Description || gameState == GameState::SpriteSelection || gameState == GameState::GameOver || gameState == GameState::Gameplay) {
-                    gameState = GameState::Menu;
-                    score = 0;
-                    lives = 3;
-                }
-                else if (gameState == GameState::Menu) {
-                    window.close();
-                }
-            }
-            if (event.key.code == Keyboard::Space) {
-                if (gameState == GameState::Gameplay) {
-                    if (isPaused) {
-                        isPaused = false;
+                if (event.key.code == Keyboard::Escape) {
+                    if (gameState == GameState::Description || gameState == GameState::SpriteSelection || gameState == GameState::Gameplay || gameState == GameState::GameOver) {
+                        gameState = GameState::Menu;
                     }
-                    else {
-                        isPaused = true;
+                    else if (gameState == GameState::Menu) {
+                        window.close();
                     }
                 }
             }
-
-            break;
-        case Event::MouseButtonPressed:
-            if (event.mouseButton.button == Mouse::Left) {
-                if (gameState == GameState::Menu) {
-                    Vector2i mousePosition = Mouse::getPosition(window);
-                    FloatRect startGameBounds = startGameText.getGlobalBounds();
-                    FloatRect descriptionBounds = descriptionButton.getGlobalBounds();
-                    if (startGameBounds.contains(mousePosition.x, mousePosition.y)) {
-                        gameState = GameState::Gameplay;
-                    }
-                    else if (descriptionBounds.contains(mousePosition.x, mousePosition.y)) {
-                        gameState = GameState::Description;
-                    }
+        }
+        else if (event.type == Event::MouseButtonPressed) {
+            if (gameState == GameState::Menu) {
+                if (startGameText.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    gameState = GameState::Gameplay; // Change the game state to Gameplay
+                    startGame(); // Call the startGame() function to initialize the game
                 }
-                else if (gameState == GameState::Description) {
-                    gameState = GameState::Menu;
+                else if (descriptionButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    gameState = GameState::Description;
                 }
-                else if (gameState == GameState::SpriteSelection) {
-                    Vector2i mousePosition = Mouse::getPosition(window);
-                    FloatRect sprite1Bounds = sprite1.getGlobalBounds();
-                    FloatRect sprite2Bounds = sprite2.getGlobalBounds();
-                    FloatRect sprite3Bounds = sprite3.getGlobalBounds();
-                    if (sprite1Bounds.contains(mousePosition.x, mousePosition.y)) {
-                        selectedSprite = 1;
-                        gameState = GameState::Gameplay;
-                    }
-                    else if (sprite2Bounds.contains(mousePosition.x, mousePosition.y)) {
-                        selectedSprite = 2;
-                        gameState = GameState::Gameplay;
-                    }
-                    else if (sprite3Bounds.contains(mousePosition.x, mousePosition.y)) {
-                        selectedSprite = 3;
-                        gameState = GameState::Gameplay;
-                    }
+                else if (spriteSelectionText.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    gameState = GameState::SpriteSelection;
                 }
             }
-            break;
+            else if (gameState == GameState::SpriteSelection) {
+                if (sprite1.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    selectedSprite = 1;
+                }
+                else if (sprite2.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    selectedSprite = 2;
+                }
+                else if (sprite3.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    selectedSprite = 3;
+                }
+                gameState = GameState::Gameplay;
+                startGame();
+            }
         }
     }
 }
+
 
 void Game::update(float deltaTime)
 {
@@ -331,6 +325,7 @@ void Game::render()
         window.draw(menuBackground);
         window.draw(startGameText);
         window.draw(descriptionButton);
+        window.draw(spriteSelectionText);
     }
     else if (gameState == GameState::Description) {
         window.draw(menuBackground);
@@ -338,7 +333,7 @@ void Game::render()
     }
     else if (gameState == GameState::SpriteSelection) {
         window.draw(spriteSelectionBackground);
-        window.draw(spriteSelectionText);
+        window.draw(spriteSelectionText1);
         window.draw(sprite1);
         window.draw(sprite2);
         window.draw(sprite3);
@@ -368,11 +363,29 @@ void Game::showDescription()
 void Game::showSpriteSelection()
 {
     gameState = GameState::SpriteSelection;
+
 }
 
 void Game::startGame()
 {
     gameState = GameState::Gameplay;
+    // Set the sprite texture based on the selected sprite
+    switch (selectedSprite) {
+    case 1:
+        grootSprite.setTexture(sprite1Texture);
+        break;
+    case 2:
+        grootSprite.setTexture(sprite2Texture);
+        break;
+    case 3:
+        grootSprite.setTexture(sprite3Texture);
+        break;
+    default:
+        selectedSprite = 0;
+        gameState = GameState::Gameplay;
+        grootSprite.setTexture(grootTexture); // Set the sprite texture to childgroot.png
+        break;
+    }
 }
 
 bool Game::checkCollision(const Sprite& sprite1, const Sprite& sprite2)
