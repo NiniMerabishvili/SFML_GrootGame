@@ -21,6 +21,25 @@ private:
 
     bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
 
+    void resetGame()
+    {
+        score = 0;
+        lives = 3;
+        gameOver = false;
+        previousScore = 0;
+        selectedSprite = 0;
+        gameState = GameState::Menu;
+        // Reset the position of sprites and apples if necessary
+        greenApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
+        redApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
+        blackApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
+        grootSprite.setPosition(400, 470);
+        // Reset the texture of Groot sprite to default (childgroot.png)
+        grootSprite.setTexture(grootTexture);
+        // Reset the game over text
+        gameOverText.setString("Game Over\nYour Score is: " + to_string(score));
+    }
+
     RenderWindow window;
     Texture menuBackgroundTexture;
     Sprite menuBackground;
@@ -214,12 +233,18 @@ void Game::processEvents()
                     else if (gameState == GameState::Menu) {
                         window.close();
                     }
+                     if (gameState == GameState::GameOver) {
+                         gameState = GameState::Menu;
+                         resetGame();
+                     }
+
                 }
             }
         }
         else if (event.type == Event::MouseButtonPressed) {
             if (gameState == GameState::Menu) {
                 if (startGameText.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    resetGame();
                     gameState = GameState::Gameplay; // Change the game state to Gameplay
                     startGame(); // Call the startGame() function to initialize the game
                 }
@@ -232,12 +257,15 @@ void Game::processEvents()
             }
             else if (gameState == GameState::SpriteSelection) {
                 if (sprite1.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    resetGame();
                     selectedSprite = 1;
                 }
                 else if (sprite2.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    resetGame();
                     selectedSprite = 2;
                 }
                 else if (sprite3.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    resetGame();
                     selectedSprite = 3;
                 }
                 gameState = GameState::Gameplay;
@@ -307,6 +335,7 @@ void Game::update(float deltaTime)
             gameOver = true;
             gameState = GameState::GameOver;
             gameOverText.setString("Game Over\nYour Score is: " + to_string(score)); // Update game over text with the final score
+            
         }
         scoreText.setString("Score: " + to_string(score) + "  Lives: " + to_string(lives));
 
