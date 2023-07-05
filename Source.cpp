@@ -6,6 +6,45 @@ using namespace std;
 
 enum class GameState { Menu, Description, SpriteSelection, Gameplay, GameOver };
 
+
+class Apple {
+public:
+    Apple(Texture& texture, float scale)
+        : sprite(texture), scale(scale)
+    {
+    }
+
+    void setPosition(const Vector2f& position)
+    {
+        sprite.setPosition(position);
+    }
+
+    void move(float x, float y)
+    {
+        sprite.move(x, y);
+    }
+
+    void move(const Vector2f& offset)
+    {
+        sprite.move(offset);
+    }
+
+    void draw(RenderWindow& window)
+    {
+        window.draw(sprite);
+    }
+
+    const Vector2f& getPosition() const
+    {
+        return sprite.getPosition();
+    }
+
+private:
+    Sprite sprite;
+    float scale;
+};
+
+
 class Game {
 public:
     Game();
@@ -18,6 +57,8 @@ private:
     void showDescription();
     void showSpriteSelection(); // New function
     void startGame();
+    Apple apple;
+
 
     bool checkCollision(const Sprite& sprite1, const Sprite& sprite2);
 
@@ -83,6 +124,7 @@ private:
 };
 
 Game::Game()
+    : apple(greenAppleTexture, appleScale)
 {
     window.create(VideoMode::getDesktopMode(), "Groot Game", Style::Fullscreen);
 
@@ -209,7 +251,7 @@ Game::Game()
 
 
 void Game::run()
-{
+{   //Main loop
     while (window.isOpen()) {
         processEvents();
         update(clock.restart().asSeconds());
@@ -233,10 +275,10 @@ void Game::processEvents()
                     else if (gameState == GameState::Menu) {
                         window.close();
                     }
-                     if (gameState == GameState::GameOver) {
-                         gameState = GameState::Menu;
-                         resetGame();
-                     }
+                    if (gameState == GameState::GameOver) {
+                        gameState = GameState::Menu;
+                        resetGame();
+                    }
 
                 }
             }
@@ -303,7 +345,7 @@ void Game::update(float deltaTime)
         if (checkCollision(blackApple, greenApple) || checkCollision(blackApple, redApple)) {
             blackApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
         }
-
+        //Display apples again when they go out from the screen
         if (greenApple.getPosition().y >= window.getSize().y) {
             greenApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
         }
@@ -313,7 +355,7 @@ void Game::update(float deltaTime)
         if (blackApple.getPosition().y >= window.getSize().y) {
             blackApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
         }
-        // Check collision with apples
+        // Check sprite's collision with apples
         if (checkCollision(grootSprite, greenApple)) {
             score += 2;
             greenApple.setPosition(Vector2f(rand() % window.getSize().x, 0));
@@ -335,7 +377,7 @@ void Game::update(float deltaTime)
             gameOver = true;
             gameState = GameState::GameOver;
             gameOverText.setString("Game Over\nYour Score is: " + to_string(score)); // Update game over text with the final score
-            
+
         }
         scoreText.setString("Score: " + to_string(score) + "  Lives: " + to_string(lives));
 
